@@ -1,0 +1,11 @@
+**/*
+*.ts
+*.tsx
+*.js
+*.jsx
+src/**
+hooks/**
+components/**
+lib/**
+app/**
+contexts/**
