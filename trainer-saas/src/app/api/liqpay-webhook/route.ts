@@ -2,27 +2,32 @@ import { NextRequest, NextResponse } from 'next/server'
 import { liqPayService } from '@/lib/liqpay'
 import { PaymentsAPI, type LiqPayWebhookData } from '@/lib/api/payments'
 
+// Функція безпечного отримання змінної середовища
+function getEnvVar(name: string, defaultValue?: string): string {
+  const value = process.env[name] ?? defaultValue
+  if (!value) {
+    console.warn(`Environment variable ${name} is not set! Using fallback.`)
+    return ''
+  }
+  return value
+}
+
 // POST handler для LiqPay webhook
 export async function POST(request: NextRequest) {
   console.log('LiqPay webhook received at:', new Date().toISOString())
 
   try {
-    // Отримати дані з тіла запиту
     const formData = await request.formData()
     const data = formData.get('data') as string
     const signature = formData.get('signature') as string
 
     if (!data || !signature) {
       console.error('Missing data or signature in webhook')
-      return NextResponse.json(
-        { error: 'Missing data or signature' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing data or signature' }, { status: 400 })
     }
 
     console.log('Webhook data received, validating signature...')
 
-    // Валідація підпису для безпеки (пропускаємо для тестових підписів)
     const isTestSignature = signature.startsWith('test_signature_')
     let isValidSignature = false
 
@@ -40,29 +45,17 @@ export async function POST(request: NextRequest) {
         false,
         'Invalid signature'
       )
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 403 })
     }
 
     console.log('Signature validated, decoding webhook data...')
 
-    // Декодування даних з webhook
     const webhookData = liqPayService.decodeWebhookData(data) as LiqPayWebhookData
 
-    // Валідація структури даних
     if (!PaymentsAPI.validateWebhookData(webhookData)) {
       console.error('Invalid webhook data structure:', webhookData)
-      await PaymentsAPI.logWebhook(
-        webhookData,
-        false,
-        'Invalid data structure'
-      )
-      return NextResponse.json(
-        { error: 'Invalid webhook data structure' },
-        { status: 400 }
-      )
+      await PaymentsAPI.logWebhook(webhookData, false, 'Invalid data structure')
+      return NextResponse.json({ error: 'Invalid webhook data structure' }, { status: 400 })
     }
 
     console.log('Webhook data:', {
@@ -72,44 +65,33 @@ export async function POST(request: NextRequest) {
       currency: webhookData.currency
     })
 
-    // Знайти платіж в базі даних
+    // Safe fetch: якщо змінна середовища не встановлена, поверне пустий рядок
+    const supabaseUrl = getEnvVar('NEXT_PUBLIC_SUPABASE_URL')
+    const supabaseKey = getEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+    const liqpayPublicKey = getEnvVar('LIQPAY_PUBLIC_KEY')
+    const liqpayPrivateKey = getEnvVar('LIQPAY_PRIVATE_KEY')
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn('Supabase credentials are missing! Webhook will continue, but DB updates may fail.')
+    }
+
     const existingPayment = await PaymentsAPI.getPaymentByOrderId(webhookData.order_id)
     if (!existingPayment) {
       console.error('Payment not found for order_id:', webhookData.order_id)
-      await PaymentsAPI.logWebhook(
-        webhookData,
-        false,
-        'Payment not found in database'
-      )
-      return NextResponse.json(
-        { error: 'Payment not found' },
-        { status: 404 }
-      )
+      await PaymentsAPI.logWebhook(webhookData, false, 'Payment not found in database')
+      return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
     }
 
     console.log('Payment found in database:', existingPayment.id)
 
-    // Маппінг статусу LiqPay до нашого формату
     const newStatus = PaymentsAPI.mapLiqPayStatus(webhookData.status)
 
-    // Оновити статус платежу в базі даних
-    const updatedPayment = await PaymentsAPI.updatePaymentStatus(
-      webhookData.order_id,
-      newStatus,
-      webhookData
-    )
+    const updatedPayment = await PaymentsAPI.updatePaymentStatus(webhookData.order_id, newStatus, webhookData)
 
     if (!updatedPayment) {
       console.error('Failed to update payment status')
-      await PaymentsAPI.logWebhook(
-        webhookData,
-        false,
-        'Failed to update payment in database'
-      )
-      return NextResponse.json(
-        { error: 'Failed to update payment' },
-        { status: 500 }
-      )
+      await PaymentsAPI.logWebhook(webhookData, false, 'Failed to update payment in database')
+      return NextResponse.json({ error: 'Failed to update payment' }, { status: 500 })
     }
 
     console.log('Payment status updated successfully:', {
@@ -118,45 +100,25 @@ export async function POST(request: NextRequest) {
       new_status: updatedPayment.status
     })
 
-    // Логування успішного webhook
     await PaymentsAPI.logWebhook(webhookData, true)
 
     // Додаткові дії залежно від статусу
     switch (newStatus) {
       case 'completed':
         console.log('Payment completed, triggering success actions...')
-        // Тут можна додати логіку для:
-        // - Відправки email підтвердження клієнту
-        // - Автоматичного планування сесії в календарі
-        // - Оновлення статистики тренера
         break
-
       case 'failed':
         console.log('Payment failed, triggering failure actions...')
-        // Тут можна додати логіку для:
-        // - Відправки сповіщення тренеру про неуспішний платіж
-        // - Створення завдання для повторної спроби
         break
-
       case 'refunded':
         console.log('Payment refunded, triggering refund actions...')
-        // Тут можна додати логіку для:
-        // - Скасування запланованих сесій
-        // - Сповіщення тренера про повернення коштів
         break
     }
 
-    // Повернути успішну відповідь LiqPay
-    return NextResponse.json({
-      success: true,
-      payment_id: updatedPayment.id,
-      status: updatedPayment.status
-    })
+    return NextResponse.json({ success: true, payment_id: updatedPayment.id, status: updatedPayment.status })
 
   } catch (error) {
     console.error('Webhook processing error:', error)
-
-    // Логування помилки
     try {
       await PaymentsAPI.logWebhook(
         { order_id: 'unknown', status: 'error' } as LiqPayWebhookData,
@@ -166,11 +128,7 @@ export async function POST(request: NextRequest) {
     } catch (logError) {
       console.error('Failed to log webhook error:', logError)
     }
-
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
