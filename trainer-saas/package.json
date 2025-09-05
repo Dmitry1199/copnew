@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev -H 0.0.0.0 --turbopack",
     "build": "next build",
-    "build:prod": "NEXT_LINT=false next build",
     "start": "next start",
     "lint": "bunx tsc --noEmit && next lint",
     "lint:fix": "next lint --fix",
