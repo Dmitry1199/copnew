@@ -213,9 +213,32 @@ AFTER INSERT ON auth.users
 FOR EACH ROW EXECUTE FUNCTION public.create_trainer_after_signup();
 
 -- =============== DEMO DATA ===============
-INSERT INTO trainers (id, email, first_name, last_name, phone, bio) VALUES
-('00000000-0000-0000-0000-000000000001', 'demo@trainerpro.com', 'Олексій', 'Тренер', '+380671234567', 'Сертифікований тренер');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM trainers WHERE id = '00000000-0000-0000-0000-000000000001'
+  ) THEN
+    INSERT INTO trainers (id, email, first_name, last_name, phone, bio) VALUES
+      ('00000000-0000-0000-0000-000000000001', 'demo@trainerpro.com', 'Олексій', 'Тренер', '+380671234567', 'Сертифікований тренер');
+  END IF;
+END $$;
 
-INSERT INTO clients (trainer_id, first_name, last_name, email, phone) VALUES
-('00000000-0000-0000-0000-000000000001', 'Марина', 'Коваленко', 'marina@email.com', '+380671234567'),
-('00000000-0000-0000-0000-000000000001', 'Андрій', 'Петров', 'andrii@email.com', '+380952345678');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM clients WHERE email = 'marina@email.com'
+  ) THEN
+    INSERT INTO clients (trainer_id, first_name, last_name, email, phone) VALUES
+      ('00000000-0000-0000-0000-000000000001', 'Марина', 'Коваленко', 'marina@email.com', '+380671234567');
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM clients WHERE email = 'andrii@email.com'
+  ) THEN
+    INSERT INTO clients (trainer_id, first_name, last_name, email, phone) VALUES
+      ('00000000-0000-0000-0000-000000000001', 'Андрій', 'Петров', 'andrii@email.com', '+380952345678');
+  END IF;
+END $$;
