@@ -1,8 +1,11 @@
 -- TrainerPro Database Schema for Supabase
--- Run this in Supabase SQL Editor to create the database structure
+-- Повна версія зі всіма RLS політиками
+-- Скопіюй у Supabase SQL Editor і виконай
+
+-- =============== TABLES ===============
 
 -- Таблиця тренерів
-CREATE TABLE trainers (
+CREATE TABLE IF NOT EXISTS trainers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT UNIQUE NOT NULL,
     first_name TEXT NOT NULL,
@@ -25,7 +28,7 @@ CREATE TABLE trainers (
 );
 
 -- Таблиця клієнтів
-CREATE TABLE clients (
+CREATE TABLE IF NOT EXISTS clients (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     trainer_id UUID NOT NULL REFERENCES trainers(id) ON DELETE CASCADE,
     first_name TEXT NOT NULL,
@@ -47,7 +50,7 @@ CREATE TABLE clients (
 );
 
 -- Таблиця тренувальних програм
-CREATE TABLE training_programs (
+CREATE TABLE IF NOT EXISTS training_programs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     trainer_id UUID NOT NULL REFERENCES trainers(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -65,7 +68,7 @@ CREATE TABLE training_programs (
 );
 
 -- Таблиця сесій (тренувань)
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     trainer_id UUID NOT NULL REFERENCES trainers(id) ON DELETE CASCADE,
     client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -83,7 +86,7 @@ CREATE TABLE sessions (
 );
 
 -- Таблиця платежів
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     trainer_id UUID NOT NULL REFERENCES trainers(id) ON DELETE CASCADE,
     client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -103,20 +106,20 @@ CREATE TABLE payments (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Індекси для кращої продуктивності
-CREATE INDEX idx_clients_trainer_id ON clients(trainer_id);
-CREATE INDEX idx_training_programs_trainer_id ON training_programs(trainer_id);
-CREATE INDEX idx_sessions_trainer_id ON sessions(trainer_id);
-CREATE INDEX idx_payments_trainer_id ON payments(trainer_id);
+-- =============== INDEXES ===============
+CREATE INDEX IF NOT EXISTS idx_clients_trainer_id ON clients(trainer_id);
+CREATE INDEX IF NOT EXISTS idx_training_programs_trainer_id ON training_programs(trainer_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_trainer_id ON sessions(trainer_id);
+CREATE INDEX IF NOT EXISTS idx_payments_trainer_id ON payments(trainer_id);
 
--- Тригери для оновлення updated_at
+-- =============== TRIGGERS ===============
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_trainers_updated_at BEFORE UPDATE ON trainers
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -124,27 +127,80 @@ CREATE TRIGGER update_trainers_updated_at BEFORE UPDATE ON trainers
 CREATE TRIGGER update_clients_updated_at BEFORE UPDATE ON clients
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Row Level Security
+-- =============== RLS ENABLE ===============
 ALTER TABLE trainers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE training_programs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 
--- Політики RLS
-CREATE POLICY "Trainers can view own profile" ON trainers
-    FOR SELECT USING (auth.uid() = id);
+-- =============== RLS POLICIES ===============
 
-CREATE POLICY "Trainers can view own clients" ON clients
-    FOR SELECT USING (trainer_id = auth.uid());
+-- TRAINERS
+CREATE POLICY "Trainers can view own profile"
+ON trainers FOR SELECT
+USING (auth.uid() = id);
 
-CREATE POLICY "Trainers can insert own clients" ON clients
-    FOR INSERT WITH CHECK (trainer_id = auth.uid());
+CREATE POLICY "Trainers can update own profile"
+ON trainers FOR UPDATE
+USING (auth.uid() = id);
 
--- Демо дані
+-- CLIENTS
+CREATE POLICY "Trainers can view own clients"
+ON clients FOR SELECT
+USING (trainer_id = auth.uid());
+
+CREATE POLICY "Trainers can insert own clients"
+ON clients FOR INSERT
+WITH CHECK (trainer_id = auth.uid());
+
+CREATE POLICY "Trainers can update own clients"
+ON clients FOR UPDATE
+USING (trainer_id = auth.uid());
+
+-- TRAINING PROGRAMS
+CREATE POLICY "Trainers can view own programs"
+ON training_programs FOR SELECT
+USING (trainer_id = auth.uid());
+
+CREATE POLICY "Trainers can insert own programs"
+ON training_programs FOR INSERT
+WITH CHECK (trainer_id = auth.uid());
+
+CREATE POLICY "Trainers can update own programs"
+ON training_programs FOR UPDATE
+USING (trainer_id = auth.uid());
+
+-- SESSIONS
+CREATE POLICY "Trainers can view own sessions"
+ON sessions FOR SELECT
+USING (trainer_id = auth.uid());
+
+CREATE POLICY "Trainers can insert own sessions"
+ON sessions FOR INSERT
+WITH CHECK (trainer_id = auth.uid());
+
+CREATE POLICY "Trainers can update own sessions"
+ON sessions FOR UPDATE
+USING (trainer_id = auth.uid());
+
+-- PAYMENTS
+CREATE POLICY "Trainers can view own payments"
+ON payments FOR SELECT
+USING (trainer_id = auth.uid());
+
+CREATE POLICY "Trainers can insert own payments"
+ON payments FOR INSERT
+WITH CHECK (trainer_id = auth.uid());
+
+CREATE POLICY "Trainers can update own payments"
+ON payments FOR UPDATE
+USING (trainer_id = auth.uid());
+
+-- =============== DEMO DATA ===============
 INSERT INTO trainers (id, email, first_name, last_name, phone, bio) VALUES
-('00000000-0000-0000-0000-000000000001', 'demo@trainerpro.com', 'Олексій', 'Тренер', '+380 67 123 4567', 'Сертифікований тренер');
+('00000000-0000-0000-0000-000000000001', 'demo@trainerpro.com', 'Олексій', 'Тренер', '+380671234567', 'Сертифікований тренер');
 
 INSERT INTO clients (trainer_id, first_name, last_name, email, phone) VALUES
-('00000000-0000-0000-0000-000000000001', 'Марина', 'Коваленко', 'marina@email.com', '+380 67 123 4567'),
-('00000000-0000-0000-0000-000000000001', 'Андрій', 'Петров', 'andrii@email.com', '+380 95 234 5678');
+('00000000-0000-0000-0000-000000000001', 'Марина', 'Коваленко', 'marina@email.com', '+380671234567'),
+('00000000-0000-0000-0000-000000000001', 'Андрій', 'Петров', 'andrii@email.com', '+380952345678');
