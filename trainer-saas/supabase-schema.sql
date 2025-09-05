@@ -1,12 +1,11 @@
 -- TrainerPro Database Schema for Supabase
--- Повна версія зі всіма RLS політиками
--- Скопіюй у Supabase SQL Editor і виконай
+-- Оптимізована версія з RLS та тригером на створення профілю
 
 -- =============== TABLES ===============
 
--- Таблиця тренерів
+-- Таблиця тренерів (id = auth.uid())
 CREATE TABLE IF NOT EXISTS trainers (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- буде замінено тригером при signup
     email TEXT UNIQUE NOT NULL,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
@@ -122,10 +121,10 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_trainers_updated_at BEFORE UPDATE ON trainers
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_clients_updated_at BEFORE UPDATE ON clients
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =============== RLS ENABLE ===============
 ALTER TABLE trainers ENABLE ROW LEVEL SECURITY;
@@ -135,67 +134,48 @@ ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 
 -- =============== RLS POLICIES ===============
-
 -- TRAINERS
-CREATE POLICY "Trainers can view own profile"
-ON trainers FOR SELECT
-USING (auth.uid() = id);
-
-CREATE POLICY "Trainers can update own profile"
-ON trainers FOR UPDATE
-USING (auth.uid() = id);
+CREATE POLICY "Trainers can view own profile" ON trainers FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Trainers can update own profile" ON trainers FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Trainers can delete own profile" ON trainers FOR DELETE USING (auth.uid() = id);
 
 -- CLIENTS
-CREATE POLICY "Trainers can view own clients"
-ON clients FOR SELECT
-USING (trainer_id = auth.uid());
-
-CREATE POLICY "Trainers can insert own clients"
-ON clients FOR INSERT
-WITH CHECK (trainer_id = auth.uid());
-
-CREATE POLICY "Trainers can update own clients"
-ON clients FOR UPDATE
-USING (trainer_id = auth.uid());
+CREATE POLICY "Trainers can view own clients" ON clients FOR SELECT USING (trainer_id = auth.uid());
+CREATE POLICY "Trainers can insert own clients" ON clients FOR INSERT WITH CHECK (trainer_id = auth.uid());
+CREATE POLICY "Trainers can update own clients" ON clients FOR UPDATE USING (trainer_id = auth.uid());
+CREATE POLICY "Trainers can delete own clients" ON clients FOR DELETE USING (trainer_id = auth.uid());
 
 -- TRAINING PROGRAMS
-CREATE POLICY "Trainers can view own programs"
-ON training_programs FOR SELECT
-USING (trainer_id = auth.uid());
-
-CREATE POLICY "Trainers can insert own programs"
-ON training_programs FOR INSERT
-WITH CHECK (trainer_id = auth.uid());
-
-CREATE POLICY "Trainers can update own programs"
-ON training_programs FOR UPDATE
-USING (trainer_id = auth.uid());
+CREATE POLICY "Trainers can view own programs" ON training_programs FOR SELECT USING (trainer_id = auth.uid());
+CREATE POLICY "Trainers can insert own programs" ON training_programs FOR INSERT WITH CHECK (trainer_id = auth.uid());
+CREATE POLICY "Trainers can update own programs" ON training_programs FOR UPDATE USING (trainer_id = auth.uid());
+CREATE POLICY "Trainers can delete own programs" ON training_programs FOR DELETE USING (trainer_id = auth.uid());
 
 -- SESSIONS
-CREATE POLICY "Trainers can view own sessions"
-ON sessions FOR SELECT
-USING (trainer_id = auth.uid());
-
-CREATE POLICY "Trainers can insert own sessions"
-ON sessions FOR INSERT
-WITH CHECK (trainer_id = auth.uid());
-
-CREATE POLICY "Trainers can update own sessions"
-ON sessions FOR UPDATE
-USING (trainer_id = auth.uid());
+CREATE POLICY "Trainers can view own sessions" ON sessions FOR SELECT USING (trainer_id = auth.uid());
+CREATE POLICY "Trainers can insert own sessions" ON sessions FOR INSERT WITH CHECK (trainer_id = auth.uid());
+CREATE POLICY "Trainers can update own sessions" ON sessions FOR UPDATE USING (trainer_id = auth.uid());
+CREATE POLICY "Trainers can delete own sessions" ON sessions FOR DELETE USING (trainer_id = auth.uid());
 
 -- PAYMENTS
-CREATE POLICY "Trainers can view own payments"
-ON payments FOR SELECT
-USING (trainer_id = auth.uid());
+CREATE POLICY "Trainers can view own payments" ON payments FOR SELECT USING (trainer_id = auth.uid());
+CREATE POLICY "Trainers can insert own payments" ON payments FOR INSERT WITH CHECK (trainer_id = auth.uid());
+CREATE POLICY "Trainers can update own payments" ON payments FOR UPDATE USING (trainer_id = auth.uid());
+CREATE POLICY "Trainers can delete own payments" ON payments FOR DELETE USING (trainer_id = auth.uid());
 
-CREATE POLICY "Trainers can insert own payments"
-ON payments FOR INSERT
-WITH CHECK (trainer_id = auth.uid());
+-- =============== TRIGGER: AUTO-CREATE TRAINER PROFILE ===============
+CREATE OR REPLACE FUNCTION public.create_trainer_after_signup()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO trainers (id, email, first_name, last_name, created_at)
+    VALUES (NEW.id, NEW.email, 'Новий', 'Тренер', NOW());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-CREATE POLICY "Trainers can update own payments"
-ON payments FOR UPDATE
-USING (trainer_id = auth.uid());
+CREATE TRIGGER trg_create_trainer
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE FUNCTION public.create_trainer_after_signup();
 
 -- =============== DEMO DATA ===============
 INSERT INTO trainers (id, email, first_name, last_name, phone, bio) VALUES
