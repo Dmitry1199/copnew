@@ -1,20 +1,41 @@
-[images]
-  remote_images = ["https://source.unsplash.com/.*", "https://images.unsplash.com/.*", "https://ext.same-assets.com/.*", "https://ugc.same-assets.com/.*"]
+# -----------------------------
+# Netlify конфіг для Next.js
+# -----------------------------
 
 [build]
-  command = "bun run build"
-  publish = ".next"
+  command = "bun run build"   # або "npm run build" / "yarn build"
+  publish = ".next"           # папка для публікації Next.js
 
 [build.environment]
   NODE_VERSION = "18"
 
+# -----------------------------
+# Next.js плагін для Netlify
+# -----------------------------
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-[functions]
-  node_bundler = "esbuild"
-
+# -----------------------------
+# API редиректи
+# -----------------------------
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/___netlify-handler"
   status = 200
+
+# -----------------------------
+# Remote images (для next/image)
+# -----------------------------
+[images]
+  remote_images = [
+    "https://source.unsplash.com/.*",
+    "https://images.unsplash.com/.*",
+    "https://ext.same-assets.com/.*",
+    "https://ugc.same-assets.com/.*"
+  ]
+
+# -----------------------------
+# ВАЖЛИВО:
+# Не додавати редирект /* → /index.html
+# Для Next.js плагін сам обробляє всі маршрути
+# -----------------------------
