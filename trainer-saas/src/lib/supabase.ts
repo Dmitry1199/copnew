@@ -1,11 +1,20 @@
-import { createClient } from '@supabase/supabase-js'
+// lib/supabase.ts
+import { createClient, SupabaseClient, User } from '@supabase/supabase-js'
 import { Database } from './database.types'
 
-// Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://trainer-pro-demo.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'demo-key-for-trainer-pro'
+// ------------------------
+// SUPABASE CLIENT
+// ------------------------
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables'
+  )
+}
+
+export const supabase: SupabaseClient<Database> = createClient<Database>(supabaseUrl, supabaseAnonKey)
 
 // ------------------------
 // UTILS
@@ -55,7 +64,7 @@ export const authHelpers = {
     if (error) handleSupabaseError(error)
   },
 
-  async getCurrentUser() {
+  async getCurrentUser(): Promise<User | null> {
     const { data: { user }, error } = await supabase.auth.getUser()
     if (error) handleSupabaseError(error)
     return user
@@ -69,42 +78,35 @@ export const authHelpers = {
 }
 
 // ------------------------
-// CRUD HELPERS
+// CRUD FACTORY
 // ------------------------
-const getTrainerId = async () => {
-  const { data: { user }, error } = await supabase.auth.getUser()
-  if (error) handleSupabaseError(error)
-  if (!user) throw new DatabaseError('Неавторизований користувач')
-  return user.id
-}
-
 const crudFactory = <T extends { id: any }>(table: keyof Database['public']['Tables']) => ({
-  async getAll() {
+  async getAll(): Promise<T[]> {
     const { data, error } = await supabase.from<T>(table).select('*')
     if (error) handleSupabaseError(error)
     return data || []
   },
 
-  async getById(id: string) {
+  async getById(id: string): Promise<T | null> {
     const { data, error } = await supabase.from<T>(table).select('*').eq('id', id).single()
     if (error) handleSupabaseError(error)
     return data
   },
 
-  async insert(row: InsertRow<T>) {
+  async insert(row: InsertRow<T>): Promise<T> {
     const { data, error } = await supabase.from<T>(table).insert([row]).select().single()
     if (error) handleSupabaseError(error)
     return data
   },
 
-  async update(row: UpdateRow<T>) {
+  async update(row: UpdateRow<T>): Promise<T> {
     const { id, ...rest } = row
     const { data, error } = await supabase.from<T>(table).update(rest).eq('id', id).select().single()
     if (error) handleSupabaseError(error)
     return data
   },
 
-  async delete(id: string) {
+  async delete(id: string): Promise<T> {
     const { data, error } = await supabase.from<T>(table).delete().eq('id', id).select().single()
     if (error) handleSupabaseError(error)
     return data
@@ -124,8 +126,7 @@ export const Payments = crudFactory<Payment>('payments')
 // REAL-TIME SUBSCRIPTIONS
 // ------------------------
 export const subscribeToTrainerData = async (callback: (payload: any) => void) => {
-  const { data: { user }, error } = await supabase.auth.getUser()
-  if (error) handleSupabaseError(error)
+  const user = await authHelpers.getCurrentUser()
   if (!user) throw new DatabaseError('Неавторизований користувач')
   const trainerId = user.id
 
