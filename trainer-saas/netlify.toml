@@ -1,38 +1,14 @@
 [build]
-  command = "bun run build"
+  command = "npm run build"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "18"
+  NEXT_PUBLIC_SUPABASE_URL = "<твій supabase URL>"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "<твій supabase ANON KEY>"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
-
-[[redirects]]
-# API редиректи для Netlify Functions
-from = "/api/*"
-to = "/.netlify/functions/___netlify-handler"
-status = 200
-
-[[redirects]]
-# Next.js image оптимізація (_next/image)
-from = "/_next/image"
-to = "/.netlify/images?url=:url&w=:width&q=:quality"
-status = 200
-  [redirects.query]
-  url = ":url"
-  w = ":width"
-  q = ":quality"
-
-[[redirects]]
-# IPX images (якщо використовується)
-from = "/_ipx/*"
-to = "/.netlify/images?url=:url&w=:width&q=:quality"
-status = 200
-  [redirects.query]
-  url = ":url"
-  w = ":width"
-  q = ":quality"
 
 [[headers]]
 for = "/_next/static/*"
