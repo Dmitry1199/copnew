@@ -71,10 +71,11 @@ export const authHelpers = {
 // ------------------------
 // CRUD HELPERS
 // ------------------------
-const getTrainerId = () => {
-  const user = supabase.auth.getUser()
+const getTrainerId = async () => {
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error) handleSupabaseError(error)
   if (!user) throw new DatabaseError('Неавторизований користувач')
-  return user
+  return user.id
 }
 
 const crudFactory = <T extends { id: any }>(table: keyof Database['public']['Tables']) => ({
@@ -122,10 +123,11 @@ export const Payments = crudFactory<Payment>('payments')
 // ------------------------
 // REAL-TIME SUBSCRIPTIONS
 // ------------------------
-export const subscribeToTrainerData = (callback: (payload: any) => void) => {
-  const trainer = supabase.auth.getUser()
-  if (!trainer) throw new DatabaseError('Неавторизований користувач')
-  const trainerId = trainer.user.id
+export const subscribeToTrainerData = async (callback: (payload: any) => void) => {
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error) handleSupabaseError(error)
+  if (!user) throw new DatabaseError('Неавторизований користувач')
+  const trainerId = user.id
 
   return supabase.channel('trainer-data')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'clients', filter: `trainer_id=eq.${trainerId}` }, callback)
