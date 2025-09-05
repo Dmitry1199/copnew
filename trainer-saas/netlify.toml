@@ -1,41 +1,48 @@
-# -----------------------------
-# Netlify конфіг для Next.js
-# -----------------------------
-
 [build]
-  command = "bun run build"   # або "npm run build" / "yarn build"
-  publish = ".next"           # папка для публікації Next.js
+  command = "bun run build"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "18"
 
-# -----------------------------
-# Next.js плагін для Netlify
-# -----------------------------
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# -----------------------------
-# API редиректи
-# -----------------------------
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/___netlify-handler"
-  status = 200
+# API редиректи для Netlify Functions
+from = "/api/*"
+to = "/.netlify/functions/___netlify-handler"
+status = 200
 
-# -----------------------------
-# Remote images (для next/image)
-# -----------------------------
-[images]
-  remote_images = [
-    "https://source.unsplash.com/.*",
-    "https://images.unsplash.com/.*",
-    "https://ext.same-assets.com/.*",
-    "https://ugc.same-assets.com/.*"
-  ]
+[[redirects]]
+# Next.js image оптимізація (_next/image)
+from = "/_next/image"
+to = "/.netlify/images?url=:url&w=:width&q=:quality"
+status = 200
+  [redirects.query]
+  url = ":url"
+  w = ":width"
+  q = ":quality"
 
-# -----------------------------
-# ВАЖЛИВО:
-# Не додавати редирект /* → /index.html
-# Для Next.js плагін сам обробляє всі маршрути
-# -----------------------------
+[[redirects]]
+# IPX images (якщо використовується)
+from = "/_ipx/*"
+to = "/.netlify/images?url=:url&w=:width&q=:quality"
+status = 200
+  [redirects.query]
+  url = ":url"
+  w = ":width"
+  q = ":quality"
+
+[[headers]]
+for = "/_next/static/*"
+  [headers.values]
+  Cache-Control = "public, max-age=31536000, immutable"
+
+[context.production.images]
+remote_images = [
+  "https://source.unsplash.com/.*",
+  "https://images.unsplash.com/.*",
+  "https://ext.same-assets.com/.*",
+  "https://ugc.same-assets.com/.*"
+]
