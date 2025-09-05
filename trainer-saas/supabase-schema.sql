@@ -137,32 +137,65 @@ ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 
 -- =============== RLS POLICIES ===============
 -- TRAINERS
+DROP POLICY IF EXISTS "Trainers can view own profile" ON trainers;
 CREATE POLICY "Trainers can view own profile" ON trainers FOR SELECT USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Trainers can update own profile" ON trainers;
 CREATE POLICY "Trainers can update own profile" ON trainers FOR UPDATE USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Trainers can delete own profile" ON trainers;
 CREATE POLICY "Trainers can delete own profile" ON trainers FOR DELETE USING (auth.uid() = id);
 
 -- CLIENTS
+DROP POLICY IF EXISTS "Trainers can view own clients" ON clients;
 CREATE POLICY "Trainers can view own clients" ON clients FOR SELECT USING (trainer_id = auth.uid());
+
+DROP POLICY IF EXISTS "Trainers can insert own clients" ON clients;
 CREATE POLICY "Trainers can insert own clients" ON clients FOR INSERT WITH CHECK (trainer_id = auth.uid());
+
+DROP POLICY IF EXISTS "Trainers can update own clients" ON clients;
 CREATE POLICY "Trainers can update own clients" ON clients FOR UPDATE USING (trainer_id = auth.uid());
+
+DROP POLICY IF EXISTS "Trainers can delete own clients" ON clients;
 CREATE POLICY "Trainers can delete own clients" ON clients FOR DELETE USING (trainer_id = auth.uid());
 
 -- TRAINING PROGRAMS
+DROP POLICY IF EXISTS "Trainers can view own programs" ON training_programs;
 CREATE POLICY "Trainers can view own programs" ON training_programs FOR SELECT USING (trainer_id = auth.uid());
+
+DROP POLICY IF EXISTS "Trainers can insert own programs" ON training_programs;
 CREATE POLICY "Trainers can insert own programs" ON training_programs FOR INSERT WITH CHECK (trainer_id = auth.uid());
+
+DROP POLICY IF EXISTS "Trainers can update own programs" ON training_programs;
 CREATE POLICY "Trainers can update own programs" ON training_programs FOR UPDATE USING (trainer_id = auth.uid());
+
+DROP POLICY IF EXISTS "Trainers can delete own programs" ON training_programs;
 CREATE POLICY "Trainers can delete own programs" ON training_programs FOR DELETE USING (trainer_id = auth.uid());
 
 -- SESSIONS
+DROP POLICY IF EXISTS "Trainers can view own sessions" ON sessions;
 CREATE POLICY "Trainers can view own sessions" ON sessions FOR SELECT USING (trainer_id = auth.uid());
+
+DROP POLICY IF EXISTS "Trainers can insert own sessions" ON sessions;
 CREATE POLICY "Trainers can insert own sessions" ON sessions FOR INSERT WITH CHECK (trainer_id = auth.uid());
+
+DROP POLICY IF EXISTS "Trainers can update own sessions" ON sessions;
 CREATE POLICY "Trainers can update own sessions" ON sessions FOR UPDATE USING (trainer_id = auth.uid());
+
+DROP POLICY IF EXISTS "Trainers can delete own sessions" ON sessions;
 CREATE POLICY "Trainers can delete own sessions" ON sessions FOR DELETE USING (trainer_id = auth.uid());
 
 -- PAYMENTS
+DROP POLICY IF EXISTS "Trainers can view own payments" ON payments;
 CREATE POLICY "Trainers can view own payments" ON payments FOR SELECT USING (trainer_id = auth.uid());
+
+DROP POLICY IF EXISTS "Trainers can insert own payments" ON payments;
 CREATE POLICY "Trainers can insert own payments" ON payments FOR INSERT WITH CHECK (trainer_id = auth.uid());
+
+DROP POLICY IF EXISTS "Trainers can update own payments" ON payments;
 CREATE POLICY "Trainers can update own payments" ON payments FOR UPDATE USING (trainer_id = auth.uid());
+
+DROP POLICY IF EXISTS "Trainers can delete own payments" ON payments;
 CREATE POLICY "Trainers can delete own payments" ON payments FOR DELETE USING (trainer_id = auth.uid());
 
 -- =============== TRIGGER: AUTO-CREATE TRAINER PROFILE ===============
