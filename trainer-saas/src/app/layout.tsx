@@ -31,9 +31,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-}
-        <AuthProvider>
-          <SidebarProvider>
             <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
               <SidebarHeader>
                 <SidebarInput placeholder="Пошук..." />
