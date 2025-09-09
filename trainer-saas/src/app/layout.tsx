@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { SidebarProvider } from "@/components/ui/sidebar"; // <- переконайся, що шлях правильний
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppContent } from "@/components/AppContent";
 
 const inter = Inter({
@@ -31,9 +31,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-      </body>
-    </html>
-  );
 }
         <AuthProvider>
           <SidebarProvider>
