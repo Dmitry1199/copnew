@@ -1,6 +1,6 @@
-"use client"; // <- додаємо це
+// src/app/layout.tsx
+"use client"; // Client Component, бо ми використовуємо useState
 
-import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -23,21 +23,15 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-export const metadata: Metadata = {
-  title: "TrainerPro - SaaS для персональних тренерів",
-  description:
-    "Професійна платформа для управління клієнтами, тренуваннями та розкладом персональних тренерів",
-};
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const [activeTab, setActiveTab] = useState("panel");
+  const [activeTab, setActiveTab] = useState("panel"); // вкладки Sidebar
 
   return (
     <html lang="uk">
       <body className={`${inter.variable} font-sans antialiased bg-slate-50`}>
         <AuthProvider>
           <SidebarProvider>
-            <div className="flex">
+            <div className="flex h-screen">
               <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
                 <SidebarHeader>
                   <input placeholder="Пошук..." className="w-full p-2 border rounded" />
@@ -63,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <SidebarTrigger />
               </Sidebar>
 
-              <main className="flex-1 p-4">
+              <main className="flex-1 p-4 overflow-auto">
                 {activeTab === "panel" && <div>Контент Панелі</div>}
                 {activeTab === "settings" && <div>Контент Налаштувань</div>}
                 <AppContent>{children}</AppContent>
