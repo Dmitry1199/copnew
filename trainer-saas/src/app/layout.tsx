@@ -1,3 +1,5 @@
+"use client"; // <- додаємо це
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -13,7 +15,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppContent } from "@/components/AppContent";
-import { PanelLeft } from "lucide-react"; // або свій компонент іконки
+import { PanelLeft } from "lucide-react";
 import { useState } from "react";
 
 const inter = Inter({
@@ -28,7 +30,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const [activeTab, setActiveTab] = useState("panel"); // вкладки Sidebar
+  const [activeTab, setActiveTab] = useState("panel");
 
   return (
     <html lang="uk">
@@ -38,7 +40,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex">
               <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
                 <SidebarHeader>
-                  {/* Якщо SidebarInput не існує, можна просто <input /> */}
                   <input placeholder="Пошук..." className="w-full p-2 border rounded" />
                 </SidebarHeader>
 
