@@ -72,7 +72,10 @@ export const SidebarProvider = React.forwardRef<
     [setOpenProp, open]
   )
 
-  const toggleSidebar = React.useCallback(() => (isMobile ? setOpenMobile(o => !o) : setOpen(o => !o)), [isMobile, setOpen, setOpenMobile])
+  const toggleSidebar = React.useCallback(
+    () => (isMobile ? setOpenMobile(o => !o) : setOpen(o => !o)),
+    [isMobile, setOpen, setOpenMobile]
+  )
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -115,7 +118,12 @@ export const Sidebar = React.forwardRef<
 >(({ side = "left", variant = "sidebar", collapsible = "offcanvas", className, children, ...props }, ref) => {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
-  if (collapsible === "none") return <div ref={ref} className={cn("flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground", className)} {...props}>{children}</div>
+  if (collapsible === "none")
+    return (
+      <div ref={ref} className={cn("flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground", className)} {...props}>
+        {children}
+      </div>
+    )
 
   if (isMobile) {
     return (
@@ -146,27 +154,34 @@ export const Sidebar = React.forwardRef<
       data-variant={variant}
       data-side={side}
     >
-      <div className={cn(
-        "relative w-[--sidebar-width] bg-transparent transition-[width] duration-200 ease-linear",
-        "group-data-[collapsible=offcanvas]:w-0",
-        "group-data-[side=right]:rotate-180",
-        variant === "floating" || variant === "inset"
-          ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
-          : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
-      )} />
-      <div className={cn(
-        "fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] duration-200 ease-linear md:flex",
-        side === "left"
-          ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-          : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-        variant === "floating" || variant === "inset"
-          ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
-          : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
-        className
-      )}>
-        <div data-sidebar="sidebar" className={cn(
-          "flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
-        )}>
+      <div
+        className={cn(
+          "relative w-[--sidebar-width] bg-transparent transition-[width] duration-200 ease-linear",
+          "group-data-[collapsible=offcanvas]:w-0",
+          "group-data-[side=right]:rotate-180",
+          variant === "floating" || variant === "inset"
+            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
+            : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
+        )}
+      />
+      <div
+        className={cn(
+          "fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] duration-200 ease-linear md:flex",
+          side === "left"
+            ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
+            : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
+          variant === "floating" || variant === "inset"
+            ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
+            : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
+          className
+        )}
+      >
+        <div
+          data-sidebar="sidebar"
+          className={cn(
+            "flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+          )}
+        >
           {children}
         </div>
       </div>
@@ -176,28 +191,62 @@ export const Sidebar = React.forwardRef<
 Sidebar.displayName = "Sidebar"
 
 // ================= Sidebar Trigger =================
-export const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.ComponentProps<typeof Button>>(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
-  return (
-    <Button
-      ref={ref}
-      data-sidebar="trigger"
-      variant="ghost"
-      size="icon"
-      className={cn("h-7 w-7", className)}
-      onClick={(e) => {
-        onClick?.(e)
-        toggleSidebar()
-      }}
-      {...props}
-    >
-      <PanelLeft />
-      <span className="sr-only">Toggle Sidebar</span>
-    </Button>
-  )
-})
+export const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.ComponentProps<typeof Button>>(
+  ({ className, onClick, ...props }, ref) => {
+    const { toggleSidebar } = useSidebar()
+    return (
+      <Button
+        ref={ref}
+        data-sidebar="trigger"
+        variant="ghost"
+        size="icon"
+        className={cn("h-7 w-7", className)}
+        onClick={(e) => {
+          onClick?.(e)
+          toggleSidebar()
+        }}
+        {...props}
+      >
+        <PanelLeft />
+        <span className="sr-only">Toggle Sidebar</span>
+      </Button>
+    )
+  }
+)
 SidebarTrigger.displayName = "SidebarTrigger"
 
 // ================= SidebarMenuButton Variants =================
-const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 [&>span:last-child]:truncate [&>
+export const sidebarMenuButtonVariants = cva(
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 [&>span:last-child]:truncate",
+  {
+    variants: {
+      size: {
+        small: "p-1 text-xs",
+        default: "p-2 text-sm",
+        large: "p-3 text-base",
+      },
+      intent: {
+        default: "text-sidebar-foreground",
+        destructive: "text-red-500 hover:bg-red-100",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+      intent: "default",
+    },
+  }
+)
+
+export type SidebarMenuButtonVariantsProps = VariantProps<typeof sidebarMenuButtonVariants>
+
+interface SidebarMenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, SidebarMenuButtonVariantsProps {
+  children: React.ReactNode
+}
+
+export const SidebarMenuButton: React.FC<SidebarMenuButtonProps> = ({ children, size, intent, className, ...props }) => {
+  return (
+    <button className={sidebarMenuButtonVariants({ size, intent, className })} {...props}>
+      {children}
+    </button>
+  )
+}
