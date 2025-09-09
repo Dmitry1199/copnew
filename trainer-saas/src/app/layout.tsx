@@ -2,18 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarFooter,
-  SidebarContent,
-  SidebarInput,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarTrigger,
-} from "@/components/sidebar";
-import { PanelLeft } from "lucide-react";
+import { Sidebar, SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,8 +11,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "TrainerPro - SaaS для персональних тренерів",
-  description:
-    "Професійна платформа для управління клієнтами, тренуваннями та розкладом персональних тренерів",
+  description: "Професійна платформа для управління клієнтами, тренуваннями та розкладом персональних тренерів",
 };
 
 export default function RootLayout({
@@ -34,6 +22,22 @@ export default function RootLayout({
   return (
     <html lang="uk">
       <body className={`${inter.variable} font-sans antialiased bg-slate-50`}>
+        <AuthProvider>
+          <SidebarProvider defaultOpen={true}>
+            <div className="flex h-screen w-screen">
+              <Sidebar side="left" collapsible="icon">
+                {/* Тут можна вставляти Header, Menu, Footer */}
+              </Sidebar>
+              <SidebarInset className="flex-1 overflow-auto">
+                {children}
+              </SidebarInset>
+            </div>
+          </SidebarProvider>
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}
         <AuthProvider>
           <SidebarProvider>
             <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
