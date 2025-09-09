@@ -4,8 +4,6 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  NEXT_PUBLIC_SUPABASE_URL = "<твій supabase URL>"
-  NEXT_PUBLIC_SUPABASE_ANON_KEY = "<твій supabase ANON KEY>"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
