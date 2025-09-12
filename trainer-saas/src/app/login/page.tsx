@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
@@ -19,15 +19,15 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const { login, isAuthenticated } = useAuth()
+  const { login } = useAuth() // Тепер не використовуємо isAuthenticated тут
   const router = useRouter()
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/')
-    }
-  }, [isAuthenticated, router])
+  // Цей useEffect видалено, оскільки він конфліктував
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     router.push('/')
+  //   }
+  // }, [isAuthenticated, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,6 +43,7 @@ export default function LoginPage() {
     try {
       const success = await login(email, password)
       if (success) {
+        // Залишаємо лише це перенаправлення
         router.push('/')
       } else {
         setError("Невірний email або пароль")
