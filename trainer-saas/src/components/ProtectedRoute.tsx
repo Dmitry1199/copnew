@@ -2,7 +2,6 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -12,13 +11,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login')
-    }
-  }, [isAuthenticated, isLoading, router])
-
-  // Show loading spinner while checking authentication
+  // Якщо дані ще завантажуються, показуємо спіннер
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
@@ -30,10 +23,14 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     )
   }
 
-  // Don't render anything if not authenticated (will redirect)
+  // Якщо користувач не автентифікований, перенаправляємо на сторінку входу
+  // Цей редирект має спрацювати, якщо користувач спробує зайти на захищену сторінку
+  // без авторизації.
   if (!isAuthenticated) {
+    router.push('/login')
     return null
   }
 
+  // Якщо автентифікований, відображаємо вміст
   return <>{children}</>
 }
